@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -53,10 +54,7 @@ func SearchTheDb(key string, tv bool) (ThedbSearchRsp, error) {
 		return ThedbSearchRsp{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return ThedbSearchRsp{}, err
 	}
@@ -84,10 +82,7 @@ func GetCredits(id int, tv bool) (models.TheCredit, error) {
 		return models.TheCredit{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return models.TheCredit{}, err
 	}
@@ -122,10 +117,7 @@ func GetMovieData(id int) (models.TheMovie, error) {
 		return models.TheMovie{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return models.TheMovie{}, err
 	}
@@ -154,10 +146,7 @@ func GetTvData(id int) (models.TheTv, error) {
 		return models.TheTv{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return models.TheTv{}, err
 	}
@@ -186,10 +175,7 @@ func GetTheSeasonData(id int, item int) (models.TheSeason, error) {
 		return models.TheSeason{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return models.TheSeason{}, err
 	}
@@ -220,10 +206,7 @@ func GetThePersonData(id int) (models.ThePerson, error) {
 		return models.ThePerson{}, err
 	}
 	req.Header.Set("User-Agent", config.UA)
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return models.ThePerson{}, err
 	}
@@ -523,4 +506,34 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 		return 0, err
 	}
 	return thetv.ID, nil
+}
+
+func DoRequest(req *http.Request) (*http.Response, error) {
+
+	proxy := "http://192.168.1.7:7890" // 替换为你的代理地址
+
+	// 解析代理 URL
+	proxyURL, err := url.Parse(proxy)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing proxy URL: %v", err)
+	}
+
+	// 创建 HTTP Transport
+	transport := &http.Transport{
+		Proxy: http.ProxyURL(proxyURL),
+	}
+
+	// 创建 HTTP 客户端
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   time.Second * 10, // 设置请求超时时间
+	}
+
+	// 发送请求
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %v", err)
+	}
+
+	return resp, nil
 }

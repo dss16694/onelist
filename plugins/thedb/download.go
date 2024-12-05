@@ -144,10 +144,7 @@ func Download(url string, fileName string) error {
 	if err != nil {
 		return err
 	}
-	client := http.Client{
-		Timeout: timeOut,
-	}
-	resp, err := client.Do(req)
+	resp, err := DoRequest(req)
 	if err != nil {
 		return err
 	}
