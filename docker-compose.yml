@@ -2,8 +2,9 @@ version: '3.3'
 services:
   onelist:
     restart: always
-    container_name: onelist
-    image: 'msterzhang/onelist:latest'
+    build: # 这里会根据 Dockerfile 构建镜像
+      context: .   # 构建上下文，指定为当前目录
+      dockerfile: Dockerfile
     volumes:
       - '/root/onelist/config:/config'
     ports:
