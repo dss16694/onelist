@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -484,7 +485,7 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 	id := 0
 	for i := range data.Results {
 		fmt.Println("tvName: ", name, " searchName: ", data.Results[i].Name)
-		if data.Results[i].Name == name {
+		if data.Results[i].Name == name || data.Results[i].OriginalName == name {
 			id = data.Results[i].ID
 			break
 		}
@@ -588,7 +589,12 @@ func ExtractShowName(file string) (string, error) {
 	case 2:
 		return pathSegments[0], nil // 只是名字，没有额外的目录
 	case 3:
-		if pathSegments[1] == "SP" {
+		if strings.ToLower(pathSegments[1]) == "sp" {
+			return pathSegments[0], nil
+		}
+		re := regexp.MustCompile(`[Ss](\d{1,2})`)
+		match := re.FindStringSubmatch(pathSegments[1])
+		if len(match) >= 2 {
 			return pathSegments[0], nil
 		}
 		if _, exists := chineseToArabic[pathSegments[1]]; exists {
