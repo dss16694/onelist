@@ -143,12 +143,26 @@ func Download(url string, fileName string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			fmt.Println("文件流关闭异常")
+		}
+	}(resp.Body) // 确保在函数结束时关闭响应体
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-	io.Copy(file, resp.Body)
+	defer func(file *os.File) {
+		err = file.Close()
+		if err != nil {
+			fmt.Println("文件流关闭异常")
+		}
+	}(file)
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	return nil
 }

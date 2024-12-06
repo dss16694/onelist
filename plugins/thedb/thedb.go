@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -502,10 +502,15 @@ func DoRequest(req string) ([]byte, error) {
 		return nil, fmt.Errorf("error making request: %v", err)
 	}
 
-	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+	defer func(Body io.ReadCloser) {
+		err = Body.Close()
+		if err != nil {
+			fmt.Println("文件流关闭异常")
+		}
+	}(resp.Body) // 确保在函数结束时关闭响应体
 
 	// 读取响应内容
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("读取响应内容错误:", err)
 		return body, err
