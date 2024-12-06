@@ -3,3 +3,5 @@ images
 *.exe
 public/dist
 .idea
+onelist.db
+onelist
