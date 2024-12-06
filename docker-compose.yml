@@ -7,8 +7,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - '/root/onelist/config:/config'
-    ports:
-      - '5245:5245'
+    network_mode: host
     environment:
       - PUID=0
       - PGID=0
