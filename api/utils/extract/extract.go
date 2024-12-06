@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 func removeEndingOne(s string) string {
@@ -103,6 +104,10 @@ func ExtractSeason(filePath string) (string, error) {
 		re = regexp.MustCompile(`[Ss](\d{1,2})`)
 		matches = re.FindStringSubmatch(filePath)
 		if len(matches) == 0 {
+			index := strings.Index(filePath, "/SP/")
+			if index != -1 {
+				return "0", nil
+			}
 			return "1", nil
 		}
 		return matches[1], nil

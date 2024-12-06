@@ -537,7 +537,7 @@ func DoRequestResp(req string) (*http.Response, error) {
 	// 创建 HTTP 客户端
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   time.Second * 10, // 设置请求超时时间
+		Timeout:   time.Second * 30, // 设置请求超时时间
 	}
 
 	// 发送请求
@@ -577,6 +577,9 @@ func ExtractShowName(file string) (string, error) {
 	case 2:
 		return pathSegments[0], nil // 只是名字，没有额外的目录
 	case 3:
+		if pathSegments[1] == "SP" {
+			return pathSegments[0], nil
+		}
 		if _, exists := chineseToArabic[pathSegments[1]]; exists {
 			return pathSegments[0], nil
 		}
