@@ -480,9 +480,17 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 	if len(data.Results) == 0 {
 		return 0, errors.New("tv not found")
 	}
-
-	// 获取搜索结果中第一个电视节目的 ID
-	id := data.Results[0].ID
+	id := 0
+	for i := range data.Results {
+		if data.Results[i].Name == name {
+			id = data.Results[i].ID
+		} else {
+			fmt.Println("tvName: ", name, " searchName: ", data.Results[i].Name)
+		}
+	}
+	if id == 0 {
+		return 0, errors.New("tv search not found")
+	}
 
 	// 根据电视节目的 ID 和文件名刮削并保存相关信息
 	thetv, err := TheTvDb(id, file, GalleryUid)
