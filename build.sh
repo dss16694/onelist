@@ -34,6 +34,7 @@ FetchWebRelease() {
 #  rm -rf public/dist
 #  mv -f dist public
 #  rm -rf dist.tar.gz
+echo "web source already download"
 }
 
 BuildWinArm64() {
