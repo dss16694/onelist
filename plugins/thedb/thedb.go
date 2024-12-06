@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -44,21 +44,12 @@ func SearchTheDb(key string, tv bool) (ThedbSearchRsp, error) {
 	if !tv {
 		key = extract.ExtractMovieName(key)
 	}
+	key = url.QueryEscape(key)
 	api := fmt.Sprintf("%s/search/movie?api_key=%s&language=zh&page=1&query=%s", TheApi, config.KeyDb, key)
 	if tv {
 		api = fmt.Sprintf("%s/search/tv?api_key=%s&language=zh&page=1&query=%s", TheApi, config.KeyDb, key)
 	}
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return ThedbSearchRsp{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return ThedbSearchRsp{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return ThedbSearchRsp{}, err
 	}
@@ -76,17 +67,7 @@ func GetCredits(id int, tv bool) (models.TheCredit, error) {
 	if tv {
 		api = fmt.Sprintf("%s/tv/%d/credits?api_key=%s&language=zh", TheApi, id, config.KeyDb)
 	}
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return models.TheCredit{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return models.TheCredit{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return models.TheCredit{}, err
 	}
@@ -111,17 +92,7 @@ func GetCredits(id int, tv bool) (models.TheCredit, error) {
 // 获取电影数据
 func GetMovieData(id int) (models.TheMovie, error) {
 	api := fmt.Sprintf("%s/movie/%d?api_key=%s&language=zh", TheApi, id, config.KeyDb)
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return models.TheMovie{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return models.TheMovie{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return models.TheMovie{}, err
 	}
@@ -140,17 +111,7 @@ func GetMovieData(id int) (models.TheMovie, error) {
 // 获取电视节目数据
 func GetTvData(id int) (models.TheTv, error) {
 	api := fmt.Sprintf("%s/tv/%d?api_key=%s&language=zh", TheApi, id, config.KeyDb)
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return models.TheTv{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return models.TheTv{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return models.TheTv{}, err
 	}
@@ -169,17 +130,7 @@ func GetTvData(id int) (models.TheTv, error) {
 // 获取电视每季详情
 func GetTheSeasonData(id int, item int) (models.TheSeason, error) {
 	api := fmt.Sprintf("%s/tv/%d/season/%d?api_key=%s&language=zh", TheApi, id, item, config.KeyDb)
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return models.TheSeason{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return models.TheSeason{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return models.TheSeason{}, err
 	}
@@ -200,17 +151,7 @@ func GetTheSeasonData(id int, item int) (models.TheSeason, error) {
 // 获取演员信息
 func GetThePersonData(id int) (models.ThePerson, error) {
 	api := fmt.Sprintf("%s/person/%d?api_key=%s&language=zh", TheApi, id, config.KeyDb)
-	req, err := http.NewRequest("GET", api, nil)
-	if err != nil {
-		return models.ThePerson{}, err
-	}
-	req.Header.Set("User-Agent", config.UA)
-	resp, err := DoRequest(req)
-	if err != nil {
-		return models.ThePerson{}, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
+	body, err := DoRequest(api)
 	if err != nil {
 		return models.ThePerson{}, err
 	}
@@ -553,7 +494,27 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 	return thetv.ID, nil
 }
 
-func DoRequest(req *http.Request) (*http.Response, error) {
+func DoRequest(req string) ([]byte, error) {
+
+	// 发送请求
+	resp, err := DoRequestResp(req)
+	if err != nil {
+		return nil, fmt.Errorf("error making request: %v", err)
+	}
+
+	defer resp.Body.Close() // 确保在函数结束时关闭响应体
+
+	// 读取响应内容
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("读取响应内容错误:", err)
+		return body, err
+	}
+
+	return body, nil
+}
+
+func DoRequestResp(req string) (*http.Response, error) {
 
 	proxy := "http://192.168.1.7:7890" // 替换为你的代理地址
 
@@ -575,11 +536,10 @@ func DoRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	// 发送请求
-	resp, err := client.Do(req)
+	resp, err := client.Get(req)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %v", err)
 	}
-
 	return resp, nil
 }
 

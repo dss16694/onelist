@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/msterzhang/onelist/api/utils/dir"
@@ -140,15 +139,11 @@ func DownBackImage(id string) error {
 
 // 下载图片
 func Download(url string, fileName string) error {
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := DoRequestResp(url)
 	if err != nil {
 		return err
 	}
-	resp, err := DoRequest(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // 确保在函数结束时关闭响应体
 	file, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		return err
