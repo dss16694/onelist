@@ -482,10 +482,10 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 	}
 	id := 0
 	for i := range data.Results {
+		fmt.Println("tvName: ", name, " searchName: ", data.Results[i].Name)
 		if data.Results[i].Name == name {
 			id = data.Results[i].ID
-		} else {
-			fmt.Println("tvName: ", name, " searchName: ", data.Results[i].Name)
+			break
 		}
 	}
 	if id == 0 {
