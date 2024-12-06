@@ -26,6 +26,7 @@ var (
 	DownLoadImage = ""
 	ImgUrl        = ""
 	VideoTypes    = ""
+	ProxyUrl      = ""
 	UA            = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
 )
 
@@ -67,6 +68,7 @@ func Load() {
 	UserPassword = os.Getenv("UserPassword")
 	DownLoadImage = os.Getenv("DownLoadImage")
 	ImgUrl = os.Getenv("ImgUrl")
+	ProxyUrl = os.Getenv("ProxyUrl")
 	VideoTypes = os.Getenv("VideoTypes")
 }
 

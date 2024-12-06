@@ -521,7 +521,7 @@ func DoRequest(req string) ([]byte, error) {
 
 func DoRequestResp(req string) (*http.Response, error) {
 
-	proxy := "http://192.168.1.7:7890" // 替换为你的代理地址
+	proxy := config.ProxyUrl // 替换为你的代理地址
 
 	// 解析代理 URL
 	proxyURL, err := url.Parse(proxy)
