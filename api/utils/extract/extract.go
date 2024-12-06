@@ -103,7 +103,7 @@ func ExtractSeason(filePath string) (string, error) {
 		re = regexp.MustCompile(`[Ss](\d{1,2})`)
 		matches = re.FindStringSubmatch(filePath)
 		if len(matches) == 0 {
-			return "", fmt.Errorf("get SXX error")
+			return "1", nil
 		}
 		return matches[1], nil
 	}
