@@ -478,6 +478,7 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 
 	// 如果搜索结果为空，返回错误
 	if len(data.Results) == 0 {
+		fmt.Println("tvName: ", name, " tv not found")
 		return 0, errors.New("tv not found")
 	}
 	id := 0
@@ -489,12 +490,14 @@ func RunTheTvWork(file string, GalleryUid string) (int, error) {
 		}
 	}
 	if id == 0 {
+		fmt.Println("tvName: ", name, " tv not found")
 		return 0, errors.New("tv search not found")
 	}
 
 	// 根据电视节目的 ID 和文件名刮削并保存相关信息
 	thetv, err := TheTvDb(id, file, GalleryUid)
 	if err != nil {
+		fmt.Println("tvName: ", name, " TheTvDb not found", " id: ", id)
 		return 0, err
 	}
 
