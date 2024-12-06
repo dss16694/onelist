@@ -1,7 +1,7 @@
 images
 *.db
 *.exe
-public/dist
+#public/dist
 .idea
 onelist.db
 onelist

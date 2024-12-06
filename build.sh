@@ -15,6 +15,9 @@ fi
 echo "backend version: $version"
 echo "frontend version: $webVersion"
 
+go env -w GO111MODULE=on
+go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
+
 ldflags="-w -s"
 
 FetchWebDev() {
@@ -26,11 +29,11 @@ FetchWebDev() {
 }
 
 FetchWebRelease() {
-  curl -L https://github.com/msterzhang/onelist-web/releases/latest/download/dist.tar.gz -o dist.tar.gz
-  tar -zxvf dist.tar.gz
-  rm -rf public/dist
-  mv -f dist public
-  rm -rf dist.tar.gz
+#  curl -L https://github.com/msterzhang/onelist-web/releases/latest/download/dist.tar.gz -o dist.tar.gz
+#  tar -zxvf dist.tar.gz
+#  rm -rf public/dist
+#  mv -f dist public
+#  rm -rf dist.tar.gz
 }
 
 BuildWinArm64() {
