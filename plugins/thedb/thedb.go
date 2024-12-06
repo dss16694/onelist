@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -326,18 +325,27 @@ func GetEpisodeWithTheSeason(season models.TheSeason, item int) (models.Episode,
 }
 
 // 根据电视剧Id及文件刮削保存资源
+// TheTvDb 根据电视剧ID及文件刮削保存资源。
+// 该函数首先获取电视剧的基本数据和剧组人员信息，然后根据文件名提取季和集的信息。
+// 接着，它获取指定季和集的详细信息，并根据配置决定是否下载相关图片。
+// 最后，它将电视剧、季、集和相关人员的信息保存到数据库中。
 func TheTvDb(id int, file string, GalleryUid string) (models.TheTv, error) {
+
+	// 获取电视剧的基本数据
 	data, err := GetTvData(id)
 	if err != nil {
 		return models.TheTv{}, err
 	}
+
+	// 获取电视剧的剧组人员信息
 	credit, err := GetCredits(id, true)
 	if err != nil {
 		return models.TheTv{}, err
 	}
 	data.TheCredit = credit
+
+	// 获取所有演员信息
 	casts := credit.Cast
-	// persons := []models.ThePerson{}
 	for _, cast := range casts {
 		porson, err := GetThePersonData(cast.ID)
 		if err != nil {
@@ -349,6 +357,8 @@ func TheTvDb(id int, file string, GalleryUid string) (models.TheTv, error) {
 			continue
 		}
 	}
+
+	// 获取所有剧组人员信息
 	crews := credit.Crew
 	for _, crew := range crews {
 		porson, err := GetThePersonData(crew.ID)
@@ -361,48 +371,74 @@ func TheTvDb(id int, file string, GalleryUid string) (models.TheTv, error) {
 			continue
 		}
 	}
+
+	// 从文件名中提取季和集的信息
 	SeasonNumber, EpisodeNumber, err := extract.ExtractNumberWithFile(file)
 	if err != nil {
 		return models.TheTv{}, err
 	}
+
+	// 获取指定季的详细信息
 	theseason, err := GetTheSeasonData(id, SeasonNumber)
 	if err != nil {
 		return models.TheTv{}, err
 	}
+
+	// 获取指定季在电视剧中的信息
 	season, err := GetSeasonWithTheTv(data, SeasonNumber)
 	if err != nil {
 		return models.TheTv{}, err
 	}
+
+	// 获取指定集的详细信息
 	episode, err := GetEpisodeWithTheSeason(theseason, EpisodeNumber)
 	if err != nil {
 		return models.TheTv{}, err
 	}
+
+	// 如果配置中启用了下载图片，则下载指定集的图片
 	if config.DownLoadImage == "是" {
 		DownEpisodeImages(episode.StillPath)
 	}
+
+	// 设置季和集的关联信息
 	season.TheTvID = uint(data.ID)
 	theseason.TheTvID = uint(data.ID)
 	episode.TheSeasonID = uint(theseason.ID)
 	episode.Url = file
+
+	// 清空数据中的季和集信息，以避免重复保存
 	data.Seasons = []models.Season{}
 	theseason.Episodes = []models.Episode{}
+
+	// 保存季信息到数据库
 	err = ChunkSeason(season)
 	if err != nil {
 		return data, err
 	}
+
+	// 保存指定季信息到数据库
 	err = ChunkTheSeason(theseason)
 	if err != nil {
 		return data, err
 	}
+
+	// 保存指定集信息到数据库
 	err = ChunkEpisode(episode)
 	if err != nil {
 		return data, err
 	}
+
+	// 设置电视剧的 GalleryUid
 	data.GalleryUid = GalleryUid
+
+	// 保存电视剧信息到数据库
 	err = ChunkTheTv(data)
 	if err != nil {
 		return data, err
 	}
+
+	// 返回保存的电视剧信息
 	return data, nil
 }
 
@@ -480,31 +516,40 @@ func RunTheMovieWork(file string, GalleryUid string) (int, error) {
 }
 
 // 自动刮削保存电视
+// 根据文件名和 GalleryUid 自动刮削并保存电视节目信息
+// 该函数首先获取文件的绝对路径，然后从文件名中提取电视节目的名称。
+// 接着，使用 `SearchTheDb` 函数搜索电视节目，并获取其 ID。
+// 最后，调用 `TheTvDb` 函数根据电视节目的 ID 和文件名刮削并保存相关信息。
 func RunTheTvWork(file string, GalleryUid string) (int, error) {
-	p, err := filepath.Abs(file)
+
+	fmt.Println("fileName:", file)
+
+	name, err := ExtractShowName(file)
 	if err != nil {
-		return 0, err
+		return 0, errors.New("解析电视剧名称出错")
 	}
-	fileName := filepath.Base(p)
-	fileType := path.Ext(fileName)
-	name := strings.ReplaceAll(fileName, fileType, "")
-	re := regexp.MustCompile(`[\p{Han}\d{1,2}]+`)
-	matches := re.FindAllString(name, -1)
-	if len(matches) > 0 {
-		name = matches[0]
-	}
+
+	// 搜索电视节目，获取搜索结果
 	data, err := SearchTheDb(name, true)
 	if err != nil {
 		return 0, err
 	}
+
+	// 如果搜索结果为空，返回错误
 	if len(data.Results) == 0 {
 		return 0, errors.New("tv not found")
 	}
+
+	// 获取搜索结果中第一个电视节目的 ID
 	id := data.Results[0].ID
+
+	// 根据电视节目的 ID 和文件名刮削并保存相关信息
 	thetv, err := TheTvDb(id, file, GalleryUid)
 	if err != nil {
 		return 0, err
 	}
+
+	// 返回保存的电视节目的 ID
 	return thetv.ID, nil
 }
 
@@ -536,4 +581,58 @@ func DoRequest(req *http.Request) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+// ExtractShowName 从给定的 URL 中提取节目名称
+func ExtractShowName(file string) (string, error) {
+
+	filePath, err := url.QueryUnescape(file)
+	if err != nil {
+		return "", fmt.Errorf("ExtractShowName not right")
+	}
+
+	// 查找 "tv/" 的索引
+	tvIndex := strings.Index(filePath, "tv/")
+	if tvIndex == -1 {
+		return "", fmt.Errorf("tv path not found")
+	}
+
+	// 提取 "tv" 后面的完整路径
+	fullFilePath := filePath[tvIndex+3:] // 从 "tv/" 后开始
+
+	// 分割路径
+	pathSegments := strings.Split(fullFilePath, "/")
+
+	// 根据分割的长度来输出所需的部分
+	switch len(pathSegments) {
+	case 0:
+		return "", fmt.Errorf("no segments found")
+	case 1:
+		return pathSegments[0], nil // 只有一个部分
+	case 2:
+		return pathSegments[0], nil // 只是名字，没有额外的目录
+	case 3:
+		if _, exists := chineseToArabic[pathSegments[1]]; exists {
+			return pathSegments[0], nil
+		}
+		return pathSegments[1], nil
+	case 4:
+		return pathSegments[1], nil // 提取中间部分
+	}
+
+	return "", fmt.Errorf("unknown path structure")
+}
+
+// 中文数字到阿拉伯数字的映射
+var chineseToArabic = map[string]string{
+	"第一季": "1",
+	"第二季": "2",
+	"第三季": "3",
+	"第四季": "4",
+	"第五季": "5",
+	"第六季": "6",
+	"第七季": "7",
+	"第八季": "8",
+	"第九季": "9",
+	"第十季": "10",
 }
