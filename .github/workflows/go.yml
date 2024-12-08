@@ -11,13 +11,6 @@ jobs:
     name: Release
     runs-on: ${{ matrix.platform }}
     steps:
-      - name: prerelease
-        uses: irongut/EditRelease@v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.release.id }}
-          prerelease: true
-
       - name: Setup Go
         uses: actions/setup-go@v3
         with:
@@ -37,13 +30,6 @@ jobs:
       - name: Build
         run: |
           bash build.sh release
-
-      - name: prerelease
-        uses: irongut/EditRelease@v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          id: ${{ github.event.release.id }}
-          prerelease: false
 
       - name: Release
         uses: softprops/action-gh-release@v1
