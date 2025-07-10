@@ -19,7 +19,7 @@ import (
 // 登录alist获取token
 func AlistLogin(gallery models.Gallery) (string, error) {
 	api := fmt.Sprintf("%s/api/auth/login", gallery.AlistHost)
-	form := fmt.Sprintf(`{"username":"%s","password":"%s","otp_code":""}`, gallery.AlistUser, gallery.AlistPwd)
+	form := fmt.Sprintf(`{"Username":"%s","Password":"%s","otp_code":""}`, gallery.AlistUser, gallery.AlistPwd)
 	req, err := http.NewRequest("POST", api, bytes.NewBufferString(form))
 	if err != nil {
 		return "", err
